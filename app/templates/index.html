@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Sudoku</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>Sudoku</h1>
+
+        <div class="sudoku-board">
+
+            {% for row in board %}
+                {% for cell in row %}
+
+                    <input
+                        type="text"
+                        maxlength="1"
+                        value="{{ cell if cell != 0 else '' }}"
+                        {% if cell != 0 %}readonly{% endif %}
+                    >
+
+                {% endfor %}
+            {% endfor %}
+
+        </div>
+
+        <div class="buttons">
+            <button id="check-button">Check Solution</button>
+            <button id="new-game-button">New Game</button>
+        </div>
+
+        <p id="message"></p>
+
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>
