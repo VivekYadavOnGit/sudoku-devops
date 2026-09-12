@@ -1,6 +1,6 @@
 # 🧩 Sudoku DevOps
 
-A Python Flask-based Sudoku web application built as a hands-on project for learning **software development, testing, Git, and DevOps practices**.
+A Python Flask-based Sudoku web application built as a hands-on project for learning **software development, testing, Git, Docker, and DevOps practices**.
 
 The project is being developed incrementally, with the goal of eventually implementing a complete local **CI/CD pipeline using Docker, Jenkins, and Kubernetes**—without requiring AWS.
 
@@ -8,7 +8,7 @@ The project is being developed incrementally, with the goal of eventually implem
 
 ## 🚧 Project Status
 
-**Current stage:** Application + Automated Testing + Git/GitHub
+**Current stage:** Application + Automated Testing + Git/GitHub + Docker + Gunicorn
 
 ### Completed
 
@@ -22,6 +22,11 @@ The project is being developed incrementally, with the goal of eventually implem
 * [x] Git repository
 * [x] Initial Git commit
 * [x] GitHub repository
+* [x] Dockerized application
+* [x] Production and development dependency separation
+* [x] Gunicorn production WSGI server
+* [x] Docker port mapping
+* [x] `.dockerignore`
 
 ### Coming Next
 
@@ -29,7 +34,6 @@ The project is being developed incrementally, with the goal of eventually implem
 * [ ] Generate random Sudoku puzzles
 * [ ] Add difficulty levels
 * [ ] Improve frontend UI/UX
-* [ ] Dockerize the application
 * [ ] Docker Compose
 * [ ] Jenkins CI pipeline
 * [ ] Automated Docker image builds
@@ -60,9 +64,13 @@ The project is being developed incrementally, with the goal of eventually implem
 * **Git**
 * **GitHub**
 
-### Planned DevOps Tools
+### Containerization
 
 * **Docker**
+* **Gunicorn**
+
+### Planned DevOps Tools
+
 * **Docker Compose**
 * **Jenkins**
 * **Docker Hub**
@@ -94,6 +102,9 @@ sudoku-devops/
 │
 ├── run.py
 ├── requirements.txt
+├── requirements-dev.txt
+├── Dockerfile
+├── .dockerignore
 ├── .gitignore
 └── README.md
 ```
@@ -166,6 +177,88 @@ Current result:
 
 ---
 
+## 🐳 Docker
+
+The application is containerized using Docker.
+
+The production container uses **Gunicorn** as the WSGI server instead of Flask's development server.
+
+### Build the Docker image
+
+```powershell
+docker build -t sudoku-devops .
+```
+
+### Run the container
+
+```powershell
+docker run -d -p 5000:5000 --name sudoku-app sudoku-devops
+```
+
+The application will be available at:
+
+```text
+http://localhost:5000
+```
+
+### Check running containers
+
+```powershell
+docker ps
+```
+
+### View container logs
+
+```powershell
+docker logs sudoku-app
+```
+
+### Stop the container
+
+```powershell
+docker stop sudoku-app
+```
+
+### Remove the container
+
+```powershell
+docker rm sudoku-app
+```
+
+### Docker Image
+
+The current production Docker image is approximately **214 MB** using `python:3.14-slim`.
+
+The project intentionally uses a slim Python base image and separates production dependencies from development dependencies.
+
+---
+
+## 📦 Dependencies
+
+Production and development dependencies are maintained separately.
+
+### Production
+
+`requirements.txt` contains only the dependencies required to run the application.
+
+```text
+Flask==3.1.3
+gunicorn==23.0.0
+```
+
+### Development
+
+`requirements-dev.txt` includes the production dependencies plus Pytest.
+
+```text
+-r requirements.txt
+pytest==9.1.1
+```
+
+This prevents development-only tools such as Pytest from being installed into the production Docker image.
+
+---
+
 ## 🚀 Running Locally
 
 ### 1. Clone the repository
@@ -189,13 +282,19 @@ Windows PowerShell:
 .\venv\Scripts\Activate.ps1
 ```
 
-### 4. Install dependencies
+### 4. Install development dependencies
 
 ```powershell
-python -m pip install -r requirements.txt
+python -m pip install -r requirements-dev.txt
 ```
 
-### 5. Run the application
+### 5. Run tests
+
+```powershell
+python -m pytest
+```
+
+### 6. Run the application
 
 ```powershell
 python run.py
@@ -229,6 +328,10 @@ Run Tests Again
 Git Commit
     ↓
 GitHub
+    ↓
+Docker Build
+    ↓
+Run Container
 ```
 
 The future DevOps workflow will extend this into:
@@ -304,6 +407,10 @@ Docker
  ↓
 Containerization
 
+Gunicorn
+ ↓
+Production WSGI server
+
 Jenkins
  ↓
 CI/CD automation
@@ -324,5 +431,9 @@ Each tool will be introduced only when there is a practical reason to use it.
 ## 👨‍💻 Project Status
 
 This project is actively being developed as part of a hands-on DevOps learning journey.
+
+The application is currently **containerized and running with Gunicorn**, with **8 automated tests passing**.
+
+The next major milestone is implementing **Jenkins CI/CD** to automatically test and build the application whenever changes are pushed to GitHub.
 
 More features and DevOps automation will be added progressively.
