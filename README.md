@@ -1,14 +1,14 @@
 # 🧩 Sudoku DevOps
 
-A Python Flask-based Sudoku web application built as a hands-on project for learning **software development, testing, Git, Docker, and DevOps practices**.
+A Python Flask-based Sudoku web application built as a hands-on project for learning **software development, testing, Git, Docker, Jenkins, CI/CD, and DevOps practices**.
 
-The project is being developed incrementally, with the goal of eventually implementing a complete local **CI/CD pipeline using Docker, Jenkins, and Kubernetes**—without requiring AWS.
+The project is being developed incrementally, with the goal of eventually implementing a complete local **CI/CD pipeline using Docker, Jenkins, Kubernetes, and monitoring tools**—without requiring AWS.
 
 ---
 
 ## 🚧 Project Status
 
-**Current stage:** Application + Automated Testing + Git/GitHub + Docker + Gunicorn
+**Current stage:** Application + Automated Testing + Git/GitHub + Docker + Gunicorn + Jenkins CI/CD
 
 ### Completed
 
@@ -27,6 +27,14 @@ The project is being developed incrementally, with the goal of eventually implem
 * [x] Gunicorn production WSGI server
 * [x] Docker port mapping
 * [x] `.dockerignore`
+* [x] Jenkins CI pipeline
+* [x] Jenkins Docker integration
+* [x] Automated dependency installation in CI
+* [x] Automated test execution in CI
+* [x] Automated Docker image builds
+* [x] Local automated deployment using Jenkins
+* [x] Jenkinsfile / Pipeline as Code
+* [x] Jenkins pipeline stored and version-controlled in GitHub
 
 ### Coming Next
 
@@ -35,13 +43,16 @@ The project is being developed incrementally, with the goal of eventually implem
 * [ ] Add difficulty levels
 * [ ] Improve frontend UI/UX
 * [ ] Docker Compose
-* [ ] Jenkins CI pipeline
-* [ ] Automated Docker image builds
-* [ ] Docker Hub
+* [ ] Docker image tagging and version management
+* [ ] Docker Hub / Container Registry
+* [ ] Secure Jenkins credentials
 * [ ] Kubernetes deployment
+* [ ] Kubernetes Services
+* [ ] ConfigMaps and Secrets
+* [ ] Kubernetes health checks
 * [ ] Prometheus monitoring
 * [ ] Grafana dashboards
-* [ ] Complete local CI/CD pipeline
+* [ ] Complete local production-like CI/CD environment
 
 ---
 
@@ -69,10 +80,15 @@ The project is being developed incrementally, with the goal of eventually implem
 * **Docker**
 * **Gunicorn**
 
+### CI/CD
+
+* **Jenkins**
+* **Jenkins Pipeline**
+* **Jenkinsfile / Pipeline as Code**
+
 ### Planned DevOps Tools
 
 * **Docker Compose**
-* **Jenkins**
 * **Docker Hub**
 * **Kubernetes**
 * **Prometheus**
@@ -104,6 +120,7 @@ sudoku-devops/
 ├── requirements.txt
 ├── requirements-dev.txt
 ├── Dockerfile
+├── Jenkinsfile
 ├── .dockerignore
 ├── .gitignore
 └── README.md
@@ -163,13 +180,25 @@ Current test coverage includes:
 * Incorrect solutions
 * Invalid board dimensions
 
-Run the tests with:
+Run the tests locally with:
 
 ```powershell
 python -m pytest
 ```
 
 Current result:
+
+```text
+8 passed
+```
+
+### Jenkins Automated Testing
+
+Jenkins automatically runs the test suite using a `python:3.14-slim` Docker environment.
+
+The CI pipeline verifies that the application passes all automated tests before proceeding to the Docker image build and deployment stages.
+
+Current CI result:
 
 ```text
 8 passed
@@ -328,16 +357,14 @@ Run Tests Again
 Git Commit
     ↓
 GitHub
-    ↓
-Docker Build
-    ↓
-Run Container
 ```
 
-The future DevOps workflow will extend this into:
+The current automated CI/CD workflow is:
 
 ```text
 Developer
+    ↓
+Git Commit
     ↓
 Git Push
     ↓
@@ -345,18 +372,115 @@ GitHub
     ↓
 Jenkins
     ↓
+Checkout
+    ↓
 Automated Tests
     ↓
-Docker Build
+Docker Image Build
     ↓
-Docker Registry
+Local Deployment
     ↓
-Kubernetes
-    ↓
-Application
-    ↓
-Monitoring
+Sudoku Application
 ```
+
+The Docker image produced by each Jenkins build is tagged using the Jenkins build number.
+
+For example:
+
+```text
+sudoku-devops:7
+sudoku-devops:8
+sudoku-devops:9
+```
+
+This allows each CI build to produce an identifiable Docker image.
+
+---
+
+## 🔄 Jenkins CI/CD Pipeline
+
+The Jenkins pipeline is defined using a **Jenkinsfile** stored in the GitHub repository.
+
+This follows the **Pipeline as Code** approach.
+
+### Pipeline stages
+
+```text
+Checkout
+    ↓
+Run Tests
+    ↓
+Build Docker Image
+    ↓
+Deploy
+```
+
+### Run Tests
+
+Jenkins uses:
+
+```text
+python:3.14-slim
+```
+
+as the isolated test environment.
+
+Development dependencies are installed and Pytest is executed.
+
+```text
+8 tests
+   ↓
+8 passed ✅
+```
+
+### Build Docker Image
+
+After successful tests, Jenkins builds the production Docker image:
+
+```text
+sudoku-devops:${BUILD_NUMBER}
+```
+
+For example:
+
+```text
+sudoku-devops:8
+```
+
+### Deploy
+
+After the image is built successfully, Jenkins:
+
+1. Stops the existing `sudoku-app` container
+2. Removes the old container
+3. Creates a new container from the newly built image
+4. Exposes the application on port `5000`
+
+The resulting application is available locally at:
+
+```text
+http://localhost:5000
+```
+
+---
+
+## 📄 Jenkinsfile
+
+The project's CI/CD pipeline is stored in:
+
+```text
+Jenkinsfile
+```
+
+Instead of keeping the pipeline configuration only inside Jenkins, the pipeline definition is version-controlled together with the application.
+
+This provides:
+
+* Version-controlled CI/CD configuration
+* Reproducible pipeline configuration
+* Easier Jenkins recovery
+* Pipeline changes tracked through Git
+* A single source of truth for the project workflow
 
 ---
 
@@ -384,7 +508,7 @@ Deployment
 Monitoring
 ```
 
-The CI/CD environment will initially run **locally**, without depending on AWS or another cloud provider.
+The CI/CD environment initially runs **locally**, without depending on AWS or another cloud provider.
 
 ---
 
@@ -415,6 +539,10 @@ Jenkins
  ↓
 CI/CD automation
 
+Jenkinsfile
+ ↓
+Pipeline as Code
+
 Kubernetes
  ↓
 Container orchestration
@@ -428,12 +556,47 @@ Each tool will be introduced only when there is a practical reason to use it.
 
 ---
 
+## 🏁 Current Milestone
+
+The project has successfully progressed from a basic Flask application to a **local automated CI/CD pipeline**.
+
+Current workflow:
+
+```text
+GitHub
+   ↓
+Jenkins
+   ↓
+Checkout
+   ↓
+Python Docker Environment
+   ↓
+8 Automated Tests
+   ↓
+Docker Image Build
+   ↓
+Local Deployment
+   ↓
+Sudoku Application 🚀
+```
+
+The next major milestone is introducing a **Docker Registry**, allowing Jenkins to push versioned images to Docker Hub before moving toward Kubernetes-based deployment.
+
+---
+
 ## 👨‍💻 Project Status
 
 This project is actively being developed as part of a hands-on DevOps learning journey.
 
-The application is currently **containerized and running with Gunicorn**, with **8 automated tests passing**.
+The application is currently:
 
-The next major milestone is implementing **Jenkins CI/CD** to automatically test and build the application whenever changes are pushed to GitHub.
+* **Containerized**
+* **Running with Gunicorn**
+* **Covered by 8 automated tests**
+* **Integrated with GitHub**
+* **Automatically tested by Jenkins**
+* **Automatically built into a Docker image**
+* **Automatically deployed locally by Jenkins**
+* **Using a version-controlled Jenkinsfile**
 
-More features and DevOps automation will be added progressively.
+The next phase will introduce **Docker Hub, image versioning, and Kubernetes**, progressively building toward a complete local DevOps environment.
