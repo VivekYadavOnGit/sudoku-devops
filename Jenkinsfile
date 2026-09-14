@@ -39,6 +39,30 @@ pipeline {
                 echo 'Building Docker image...'
 
                 sh 'docker build -t sudoku-devops:${BUILD_NUMBER} .'
+
+                sh 'docker tag sudoku-devops:${BUILD_NUMBER} vivekyadavdocker/sudoku-devops:${BUILD_NUMBER}'
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            agent any
+
+            steps {
+                echo 'Pushing Docker image to Docker Hub...'
+
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-credentials',
+                        usernameVariable: 'DOCKERHUB_USERNAME',
+                        passwordVariable: 'DOCKERHUB_TOKEN'
+                    )
+                ]) {
+                    sh '''
+                        echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+                        docker push vivekyadavdocker/sudoku-devops:${BUILD_NUMBER}
+                        docker logout
+                    '''
+                }
             }
         }
 
