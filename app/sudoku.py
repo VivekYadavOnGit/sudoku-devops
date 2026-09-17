@@ -1,4 +1,8 @@
+import random
+
+
 class Sudoku:
+
     def __init__(self, board):
         self.board = board
 
@@ -32,7 +36,10 @@ class Sudoku:
 
         row, col = empty
 
-        for num in range(1, 10):
+        numbers = list(range(1, 10))
+        random.shuffle(numbers)
+
+        for num in numbers:
             if self.is_valid(row, col, num):
                 self.board[row][col] = num
 
@@ -50,3 +57,42 @@ class Sudoku:
                     return row, col
 
         return None
+
+    @classmethod
+    def generate(cls, difficulty="medium"):
+        difficulty_map = {
+            "easy": 30,
+            "medium": 40,
+            "hard": 50
+        }
+
+        if difficulty not in difficulty_map:
+            raise ValueError(
+                "Difficulty must be easy, medium, or hard."
+            )
+
+        cells_to_remove = difficulty_map[difficulty]
+
+        # Start with an empty board
+        board = [[0 for _ in range(9)] for _ in range(9)]
+
+        # Generate a random complete solution
+        sudoku = cls(board)
+        sudoku.solve()
+
+        # Keep a copy of the complete solution
+        solution = [row[:] for row in sudoku.board]
+
+        # Remove numbers to create the puzzle
+        positions = [
+            (row, col)
+            for row in range(9)
+            for col in range(9)
+        ]
+
+        random.shuffle(positions)
+
+        for row, col in positions[:cells_to_remove]:
+            sudoku.board[row][col] = 0
+
+        return sudoku.board, solution

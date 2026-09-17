@@ -116,3 +116,63 @@ def test_invalid_board(client):
 
     assert response.status_code == 400
     assert response.json["valid"] is False
+
+
+def test_generate_puzzle():
+    puzzle, solution = Sudoku.generate()
+
+    assert len(puzzle) == 9
+    assert all(len(row) == 9 for row in puzzle)
+
+    assert len(solution) == 9
+    assert all(len(row) == 9 for row in solution)
+
+
+def test_generated_solution_is_valid():
+    puzzle, solution = Sudoku.generate()
+
+    sudoku = Sudoku([row[:] for row in solution])
+
+    assert sudoku.find_empty() is None
+
+    for row in range(9):
+        for col in range(9):
+            num = solution[row][col]
+
+            # Temporarily clear the cell so is_valid()
+            # doesn't detect the number itself.
+            sudoku.board[row][col] = 0
+
+            assert sudoku.is_valid(row, col, num)
+
+            sudoku.board[row][col] = num
+
+
+def test_generated_puzzle_contains_empty_cells():
+    puzzle, solution = Sudoku.generate("medium")
+
+    empty_cells = sum(
+        row.count(0)
+        for row in puzzle
+    )
+
+    assert empty_cells == 40
+
+
+def test_difficulty_levels():
+    easy_puzzle, _ = Sudoku.generate("easy")
+    medium_puzzle, _ = Sudoku.generate("medium")
+    hard_puzzle, _ = Sudoku.generate("hard")
+
+    easy_empty = sum(row.count(0) for row in easy_puzzle)
+    medium_empty = sum(row.count(0) for row in medium_puzzle)
+    hard_empty = sum(row.count(0) for row in hard_puzzle)
+
+    assert easy_empty == 30
+    assert medium_empty == 40
+    assert hard_empty == 50
+
+
+def test_invalid_difficulty():
+    with pytest.raises(ValueError):
+        Sudoku.generate("extreme")
