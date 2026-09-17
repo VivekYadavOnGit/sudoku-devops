@@ -10,6 +10,7 @@ def client():
     app.config["TESTING"] = True
 
     with app.test_client() as client:
+        client.get("/")
         yield client
 
 
@@ -78,9 +79,12 @@ def test_incomplete_solution(client):
 
 
 def test_correct_solution(client):
+    with client.session_transaction() as session:
+        solution = session["solution"]
+
     response = client.post(
         "/check",
-        json={"board": get_solution()}
+        json={"board": solution}
     )
 
     assert response.status_code == 200
@@ -176,3 +180,109 @@ def test_difficulty_levels():
 def test_invalid_difficulty():
     with pytest.raises(ValueError):
         Sudoku.generate("extreme")
+
+def test_correct_move(client):
+    with client.session_transaction() as session:
+        puzzle = session["puzzle"]
+        solution = session["solution"]
+
+    # Find an empty cell.
+    for row in range(9):
+        for col in range(9):
+            if puzzle[row][col] == 0:
+                number = solution[row][col]
+                break
+        else:
+            continue
+        break
+
+    response = client.post(
+        "/move",
+        json={
+            "row": row,
+            "col": col,
+            "number": number
+        }
+    )
+
+    assert response.status_code == 200
+    assert response.json["correct"] is True
+
+def test_incorrect_move(client):
+    with client.session_transaction() as session:
+        puzzle = session["puzzle"]
+        solution = session["solution"]
+
+    # Find an empty cell.
+    for row in range(9):
+        for col in range(9):
+            if puzzle[row][col] == 0:
+                correct_number = solution[row][col]
+
+                # Pick a number different from the solution.
+                wrong_number = (
+                    correct_number % 9
+                ) + 1
+
+                break
+        else:
+            continue
+        break
+
+    response = client.post(
+        "/move",
+        json={
+            "row": row,
+            "col": col,
+            "number": wrong_number
+        }
+    )
+
+    assert response.status_code == 200
+    assert response.json["correct"] is False
+
+def test_mistake_counter(client):
+    with client.session_transaction() as session:
+        puzzle = session["puzzle"]
+        solution = session["solution"]
+
+    # Find an empty cell.
+    for row in range(9):
+        for col in range(9):
+            if puzzle[row][col] == 0:
+                correct_number = solution[row][col]
+
+                wrong_number = (correct_number % 9) + 1
+
+                break
+        else:
+            continue
+        break
+
+    # First incorrect move.
+    response = client.post(
+        "/move",
+        json={
+            "row": row,
+            "col": col,
+            "number": wrong_number
+        }
+    )
+
+    assert response.status_code == 200
+    assert response.json["correct"] is False
+    assert response.json["mistakes"] == 1
+
+    # Second incorrect move.
+    response = client.post(
+        "/move",
+        json={
+            "row": row,
+            "col": col,
+            "number": wrong_number
+        }
+    )
+
+    assert response.status_code == 200
+    assert response.json["correct"] is False
+    assert response.json["mistakes"] == 2
