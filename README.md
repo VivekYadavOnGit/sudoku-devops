@@ -1,14 +1,14 @@
 # 🧩 Sudoku DevOps
 
-A Python Flask-based Sudoku web application built as a hands-on project for learning **software development, testing, Git, Docker, Jenkins, CI/CD, and DevOps practices**.
+A Python Flask-based Sudoku web application built as a hands-on project for learning **software development, testing, Git, Docker, Jenkins, CI/CD, Docker Compose, Docker Hub, and DevOps practices**.
 
-The project is being developed incrementally, with the goal of eventually implementing a complete local **CI/CD pipeline using Docker, Jenkins, Kubernetes, and monitoring tools**—without requiring AWS.
+The project is being developed incrementally, with the goal of eventually implementing a complete local **CI/CD and production-like environment using Docker, Jenkins, Docker Compose, Kubernetes, and monitoring tools**—without requiring AWS.
 
 ---
 
 ## 🚧 Project Status
 
-**Current stage:** Application + Automated Testing + Git/GitHub + Docker + Gunicorn + Jenkins CI/CD
+**Current stage:** Application + Automated Testing + Git/GitHub + Docker + Gunicorn + Jenkins CI/CD + Docker Hub + Docker Compose
 
 ### Completed
 
@@ -32,9 +32,15 @@ The project is being developed incrementally, with the goal of eventually implem
 * [x] Automated dependency installation in CI
 * [x] Automated test execution in CI
 * [x] Automated Docker image builds
-* [x] Local automated deployment using Jenkins
 * [x] Jenkinsfile / Pipeline as Code
 * [x] Jenkins pipeline stored and version-controlled in GitHub
+* [x] Docker image versioning using Jenkins build numbers
+* [x] Docker Hub integration
+* [x] Secure Docker Hub credentials in Jenkins
+* [x] Automated Docker image push to Docker Hub
+* [x] Docker Compose deployment
+* [x] Automated local deployment using Jenkins
+* [x] End-to-end CI/CD pipeline
 
 ### Coming Next
 
@@ -42,17 +48,14 @@ The project is being developed incrementally, with the goal of eventually implem
 * [ ] Generate random Sudoku puzzles
 * [ ] Add difficulty levels
 * [ ] Improve frontend UI/UX
-* [ ] Docker Compose
-* [ ] Docker image tagging and version management
-* [ ] Docker Hub / Container Registry
-* [ ] Secure Jenkins credentials
+* [ ] Improve deployment/container lifecycle handling
 * [ ] Kubernetes deployment
 * [ ] Kubernetes Services
 * [ ] ConfigMaps and Secrets
 * [ ] Kubernetes health checks
 * [ ] Prometheus monitoring
 * [ ] Grafana dashboards
-* [ ] Complete local production-like CI/CD environment
+* [ ] Complete local production-like DevOps environment
 
 ---
 
@@ -78,6 +81,7 @@ The project is being developed incrementally, with the goal of eventually implem
 ### Containerization
 
 * **Docker**
+* **Docker Compose**
 * **Gunicorn**
 
 ### CI/CD
@@ -86,10 +90,12 @@ The project is being developed incrementally, with the goal of eventually implem
 * **Jenkins Pipeline**
 * **Jenkinsfile / Pipeline as Code**
 
+### Container Registry
+
+* **Docker Hub**
+
 ### Planned DevOps Tools
 
-* **Docker Compose**
-* **Docker Hub**
 * **Kubernetes**
 * **Prometheus**
 * **Grafana**
@@ -116,11 +122,15 @@ sudoku-devops/
 ├── tests/
 │   └── test_sudoku.py
 │
+├── jenkins/
+│   └── Dockerfile
+│
 ├── run.py
 ├── requirements.txt
 ├── requirements-dev.txt
 ├── Dockerfile
 ├── Jenkinsfile
+├── compose.yaml
 ├── .dockerignore
 ├── .gitignore
 └── README.md
@@ -194,7 +204,7 @@ Current result:
 
 ### Jenkins Automated Testing
 
-Jenkins automatically runs the test suite using a `python:3.14-slim` Docker environment.
+Jenkins automatically runs the test suite inside a `python:3.14-slim` Docker environment.
 
 The CI pipeline verifies that the application passes all automated tests before proceeding to the Docker image build and deployment stages.
 
@@ -256,9 +266,9 @@ docker rm sudoku-app
 
 ### Docker Image
 
-The current production Docker image is approximately **214 MB** using `python:3.14-slim`.
+The production Docker image uses `python:3.14-slim` as its base image.
 
-The project intentionally uses a slim Python base image and separates production dependencies from development dependencies.
+The image includes only production dependencies from `requirements.txt`. Development tools such as Pytest are kept separate.
 
 ---
 
@@ -293,7 +303,7 @@ This prevents development-only tools such as Pytest from being installed into th
 ### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/VivekYadavOnGit/sudoku-devops.git
 cd sudoku-devops
 ```
 
@@ -337,6 +347,39 @@ http://127.0.0.1:5000
 
 ---
 
+## 🐳 Docker Compose
+
+Docker Compose is used to deploy the versioned Docker image.
+
+The application image is configured through the `IMAGE_TAG` environment variable.
+
+Example:
+
+```powershell
+$env:IMAGE_TAG="16"
+docker compose up -d
+```
+
+Check the deployment:
+
+```powershell
+docker compose ps
+```
+
+Stop the Compose deployment:
+
+```powershell
+docker compose down
+```
+
+The Compose deployment uses the Docker Hub image:
+
+```text
+vivekyadavdocker/sudoku-devops:${IMAGE_TAG}
+```
+
+---
+
 ## 🔄 Development Workflow
 
 The project is being developed using an incremental workflow:
@@ -356,10 +399,12 @@ Run Tests Again
     ↓
 Git Commit
     ↓
+Git Push
+    ↓
 GitHub
 ```
 
-The current automated CI/CD workflow is:
+The automated CI/CD workflow is:
 
 ```text
 Developer
@@ -378,22 +423,34 @@ Automated Tests
     ↓
 Docker Image Build
     ↓
-Local Deployment
+Docker Image Tag
     ↓
-Sudoku Application
+Docker Hub
+    ↓
+Docker Compose Deployment
+    ↓
+Sudoku Application 🚀
 ```
 
-The Docker image produced by each Jenkins build is tagged using the Jenkins build number.
+Each Jenkins build produces a versioned Docker image using the Jenkins build number.
 
 For example:
 
 ```text
-sudoku-devops:7
-sudoku-devops:8
-sudoku-devops:9
+Build #14
+    ↓
+vivekyadavdocker/sudoku-devops:14
+
+Build #15
+    ↓
+vivekyadavdocker/sudoku-devops:15
+
+Build #16
+    ↓
+vivekyadavdocker/sudoku-devops:16
 ```
 
-This allows each CI build to produce an identifiable Docker image.
+This makes every CI build identifiable and allows different application versions to be tracked through their Docker image tags.
 
 ---
 
@@ -412,10 +469,16 @@ Run Tests
     ↓
 Build Docker Image
     ↓
-Deploy
+Push to Docker Hub
+    ↓
+Deploy with Docker Compose
 ```
 
-### Run Tests
+### 1. Checkout
+
+Jenkins checks out the `main` branch from the GitHub repository.
+
+### 2. Run Tests
 
 Jenkins uses:
 
@@ -433,7 +496,7 @@ Development dependencies are installed and Pytest is executed.
 8 passed ✅
 ```
 
-### Build Docker Image
+### 3. Build Docker Image
 
 After successful tests, Jenkins builds the production Docker image:
 
@@ -444,19 +507,38 @@ sudoku-devops:${BUILD_NUMBER}
 For example:
 
 ```text
-sudoku-devops:8
+sudoku-devops:16
 ```
 
-### Deploy
+### 4. Push to Docker Hub
 
-After the image is built successfully, Jenkins:
+The versioned image is tagged with the Docker Hub repository:
 
-1. Stops the existing `sudoku-app` container
-2. Removes the old container
-3. Creates a new container from the newly built image
-4. Exposes the application on port `5000`
+```text
+vivekyadavdocker/sudoku-devops:${BUILD_NUMBER}
+```
 
-The resulting application is available locally at:
+Jenkins authenticates to Docker Hub using credentials stored securely in Jenkins.
+
+The image is then pushed to Docker Hub.
+
+### 5. Deploy
+
+After the image is successfully pushed, Jenkins deploys the new image using Docker Compose.
+
+The deployment uses:
+
+```text
+IMAGE_TAG=${BUILD_NUMBER}
+```
+
+For example, Jenkins build `#16` deploys:
+
+```text
+vivekyadavdocker/sudoku-devops:16
+```
+
+The application is exposed on:
 
 ```text
 http://localhost:5000
@@ -484,6 +566,38 @@ This provides:
 
 ---
 
+## 🐳 Docker Hub
+
+The project uses Docker Hub as its container registry.
+
+Docker images produced by Jenkins are pushed using versioned tags:
+
+```text
+vivekyadavdocker/sudoku-devops:14
+vivekyadavdocker/sudoku-devops:15
+vivekyadavdocker/sudoku-devops:16
+```
+
+This separates the **build process** from the **deployment process**:
+
+```text
+Jenkins
+   ↓
+Build Image
+   ↓
+Push Image
+   ↓
+Docker Hub
+   ↓
+Pull Image
+   ↓
+Docker Compose
+   ↓
+Run Application
+```
+
+---
+
 ## 🎯 Learning Goals
 
 This project is being developed primarily as a **hands-on DevOps learning project**.
@@ -500,6 +614,8 @@ Version Control
 Containerization
         ↓
 Continuous Integration
+        ↓
+Container Registry
         ↓
 Continuous Delivery
         ↓
@@ -543,6 +659,14 @@ Jenkinsfile
  ↓
 Pipeline as Code
 
+Docker Hub
+ ↓
+Container Registry
+
+Docker Compose
+ ↓
+Application Deployment
+
 Kubernetes
  ↓
 Container orchestration
@@ -558,7 +682,7 @@ Each tool will be introduced only when there is a practical reason to use it.
 
 ## 🏁 Current Milestone
 
-The project has successfully progressed from a basic Flask application to a **local automated CI/CD pipeline**.
+The project has successfully progressed from a basic Flask application to a **local automated CI/CD pipeline with Docker Hub and Docker Compose deployment**.
 
 Current workflow:
 
@@ -575,12 +699,34 @@ Python Docker Environment
    ↓
 Docker Image Build
    ↓
+Versioned Docker Image
+   ↓
+Docker Hub
+   ↓
+Docker Compose
+   ↓
 Local Deployment
    ↓
 Sudoku Application 🚀
 ```
 
-The next major milestone is introducing a **Docker Registry**, allowing Jenkins to push versioned images to Docker Hub before moving toward Kubernetes-based deployment.
+The latest successful Jenkins build demonstrates the complete workflow:
+
+```text
+Jenkins Build #16
+      ↓
+8 Tests Passed
+      ↓
+Docker Image Built
+      ↓
+Image :16
+      ↓
+Pushed to Docker Hub
+      ↓
+Docker Compose Deployment
+      ↓
+sudoku-app Running
+```
 
 ---
 
@@ -596,7 +742,37 @@ The application is currently:
 * **Integrated with GitHub**
 * **Automatically tested by Jenkins**
 * **Automatically built into a Docker image**
-* **Automatically deployed locally by Jenkins**
+* **Versioned using Jenkins build numbers**
+* **Pushed automatically to Docker Hub**
+* **Deployed automatically using Docker Compose**
 * **Using a version-controlled Jenkinsfile**
 
-The next phase will introduce **Docker Hub, image versioning, and Kubernetes**, progressively building toward a complete local DevOps environment.
+### Next Phase
+
+The next major phase is **Kubernetes**.
+
+Planned progression:
+
+```text
+Docker
+   ↓
+Jenkins CI/CD
+   ↓
+Docker Hub
+   ↓
+Docker Compose
+   ↓
+Kubernetes
+   ↓
+Services
+   ↓
+ConfigMaps & Secrets
+   ↓
+Health Checks
+   ↓
+Prometheus
+   ↓
+Grafana
+```
+
+The long-term goal is to build a complete **local production-like DevOps environment** around the Sudoku application.
