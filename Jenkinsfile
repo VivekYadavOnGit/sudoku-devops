@@ -70,16 +70,13 @@ pipeline {
             agent any
 
             steps {
-                echo 'Deploying Sudoku application...'
+                echo 'Deploying Sudoku application with Docker Compose...'
 
                 sh '''
-                    docker stop sudoku-app || true
-                    docker rm sudoku-app || true
+                    export IMAGE_TAG=${BUILD_NUMBER}
 
-                    docker run -d \
-                        --name sudoku-app \
-                        -p 5000:5000 \
-                        sudoku-devops:${BUILD_NUMBER}
+                    docker compose down || true
+                    docker compose up -d
                 '''
             }
         }
