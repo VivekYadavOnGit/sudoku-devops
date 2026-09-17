@@ -1,0 +1,6 @@
+services:
+  sudoku-app:
+    image: vivekyadavdocker/sudoku-devops:${IMAGE_TAG}
+    container_name: sudoku-app
+    ports:
+      - "5000:5000"
